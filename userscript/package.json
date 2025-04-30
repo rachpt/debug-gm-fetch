@@ -1,0 +1,18 @@
+{
+  "name": "gm-fetch-debug-userscript",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sec-ant/gm-fetch": "^1.2.1",
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3",
+    "vite": "^6.3.4",
+    "vite-plugin-monkey": "^5.0.8"
+  }
+}
