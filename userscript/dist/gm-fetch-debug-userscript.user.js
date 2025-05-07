@@ -3,9 +3,11 @@
 // @namespace    http://localhost:8080
 // @version      0.0.1
 // @author       Debug User
-// @description  Debug script for @sec-ant/gm-fetch
+// @description  Debug script for @sec-ant/gm-fetch@1.2.1
 // @match        http://localhost:8080/*
+// @grant        GM.info
 // @grant        GM.xmlHttpRequest
+// @grant        GM_info
 // @grant        GM_xmlhttpRequest
 // @run-at       document-end
 // ==/UserScript==
@@ -133,10 +135,30 @@
       });
     });
   };
+  function getGmFetchVersion() {
+    try {
+      if (typeof GM_info !== "undefined") {
+        const description = GM_info.script.description;
+        const match = description.match(/@sec-ant\/gm-fetch@(\d+\.\d+\.\d+)/);
+        return match ? match[1] : "未知";
+      }
+      return "未知";
+    } catch (e) {
+      console.error("获取版本号失败:", e);
+      return "未知 (请查看package.json)";
+    }
+  }
   function createUI() {
     const container = document.createElement("div");
     container.className = "container";
     container.style.marginTop = "20px";
+    const versionInfo = document.createElement("div");
+    versionInfo.style.marginBottom = "15px";
+    versionInfo.style.padding = "8px";
+    versionInfo.style.backgroundColor = "#e9f5ff";
+    versionInfo.style.borderRadius = "4px";
+    versionInfo.innerHTML = `当前使用的 <strong>@sec-ant/gm-fetch</strong> 版本: <code>${getGmFetchVersion()}</code>`;
+    container.appendChild(versionInfo);
     const title = document.createElement("h2");
     title.textContent = "GM-Fetch 测试";
     container.appendChild(title);
@@ -156,6 +178,37 @@
     inputGroup.appendChild(label);
     inputGroup.appendChild(input);
     container.appendChild(inputGroup);
+    const methodGroup = document.createElement("div");
+    methodGroup.style.marginBottom = "15px";
+    const methodLabel = document.createElement("label");
+    methodLabel.textContent = "请求方法：";
+    methodLabel.style.marginRight = "10px";
+    const postRadio = document.createElement("input");
+    postRadio.type = "radio";
+    postRadio.name = "requestMethod";
+    postRadio.id = "method-post";
+    postRadio.value = "POST";
+    postRadio.checked = true;
+    postRadio.style.marginRight = "5px";
+    const postLabel = document.createElement("label");
+    postLabel.htmlFor = "method-post";
+    postLabel.textContent = "POST";
+    postLabel.style.marginRight = "15px";
+    const getRadio = document.createElement("input");
+    getRadio.type = "radio";
+    getRadio.name = "requestMethod";
+    getRadio.id = "method-get";
+    getRadio.value = "GET";
+    getRadio.style.marginRight = "5px";
+    const getLabel = document.createElement("label");
+    getLabel.htmlFor = "method-get";
+    getLabel.textContent = "GET";
+    methodGroup.appendChild(methodLabel);
+    methodGroup.appendChild(postRadio);
+    methodGroup.appendChild(postLabel);
+    methodGroup.appendChild(getRadio);
+    methodGroup.appendChild(getLabel);
+    container.appendChild(methodGroup);
     const button = document.createElement("button");
     button.textContent = "发送请求";
     button.style.padding = "8px 16px";
@@ -173,10 +226,15 @@
     document.body.appendChild(container);
   }
   async function sendRequest() {
+    var _a;
     const input = document.getElementById("gm-fetch-input");
     const resultArea = document.getElementById(
       "gm-fetch-result"
     );
+    const methodRadios = document.getElementsByName(
+      "requestMethod"
+    );
+    const method = ((_a = Array.from(methodRadios).find((radio) => radio.checked)) == null ? void 0 : _a.value) || "POST";
     try {
       let inputData;
       try {
@@ -185,13 +243,30 @@
         inputData = { text: input.value };
       }
       resultArea.textContent = "请求中...";
-      const response = await H("http://localhost:8080/api/echo", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(inputData)
-      });
+      let response;
+      if (method === "GET") {
+        const queryParams = new URLSearchParams();
+        Object.entries(inputData).forEach(([key, value]) => {
+          queryParams.append(key, String(value));
+        });
+        response = await H(
+          `http://localhost:8080/api/echo?${queryParams.toString()}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json"
+            }
+          }
+        );
+      } else {
+        response = await H("http://localhost:8080/api/echo", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(inputData)
+        });
+      }
       const data = await response.json();
       resultArea.textContent = JSON.stringify(data, null, 2);
     } catch (error) {

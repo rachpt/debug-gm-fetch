@@ -15,7 +15,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.10.0",
   "dependencies": {
-    "@sec-ant/gm-fetch": "^1.2.1",
+    "@sec-ant/gm-fetch": "^1.2.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
